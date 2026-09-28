@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extração de Dados de Nota Fiscal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="title">Extração de Dados de Nota Fiscal</h1>
+      <p class="subtitle">Carregue um PDF de nota fiscal e extraia os dados automaticamente usando IA</p>
+    </header>
+
+    <!-- Card Principal: Upload -->
+    <section class="card upload-card" id="upload-card">
+      <div class="card-header">
+        <svg class="icon-header" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span>Upload do PDF</span>
+      </div>
+
+      <div class="form-group">
+        <label for="pdf-input" class="input-label">Selecione o arquivo PDF da nota fiscal</label>
+        
+        <div class="file-input-wrapper">
+          <input type="file" id="pdf-input" accept="application/pdf" />
+          <button type="button" class="btn-choose-file" id="btn-choose-file">Escolher arquivo</button>
+          <span class="file-input-text" id="file-input-text">Nenhum arquivo escolhido</span>
+        </div>
+      </div>
+
+      <!-- Arquivo Selecionado (Estado 2) -->
+      <div class="file-selected-box" id="file-selected-box" style="display: none;">
+        <div class="file-info-left">
+          <svg class="icon-file" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <line x1="10" y1="9" x2="8" y2="9"/>
+          </svg>
+          <span class="file-name" id="file-name-display"></span>
+        </div>
+        <span class="file-size-badge" id="file-size-display">0.00 MB</span>
+      </div>
+
+      <!-- Botão Extrair Dados -->
+      <button type="button" class="btn-extract" id="btn-extract" disabled>
+        <svg class="icon-extract" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span id="btn-extract-text">EXTRAIR DADOS</span>
+      </button>
+    </section>
+
+    <!-- Card de Resultado: JSON e Visualização Formatada (Estado 3) -->
+    <section class="card result-card" id="result-card" style="display: none;">
+      <h2 class="result-title">Dados Extraídos</h2>
+
+      <!-- Abas de Navegação -->
+      <div class="tabs-container">
+        <button type="button" class="tab-btn" id="tab-formatted" data-target="formatted-view">Visualização Formatada</button>
+        <button type="button" class="tab-btn active" id="tab-json" data-target="json-view">JSON</button>
+      </div>
+
+      <!-- Visualização JSON -->
+      <div class="tab-content" id="json-view">
+        <div class="code-header">
+          <div class="code-header-title">
+            <svg class="icon-code" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            <span>Dados em JSON</span>
+          </div>
+          <button type="button" class="btn-copy" id="btn-copy">
+            <svg class="icon-copy" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="btn-copy-text">Copiar JSON</span>
+          </button>
+        </div>
+
+        <div class="code-container">
+          <pre><code id="json-code-output"></code></pre>
+        </div>
+
+        <p class="result-footnote">
+          Este JSON contém todos os dados extraídos da nota fiscal e pode ser usado para integração com outros sistemas.
+        </p>
+      </div>
+
+      <!-- Visualização Formatada (Opcional/Customizável) -->
+      <div class="tab-content" id="formatted-view" style="display: none;">
+        <div class="formatted-container" id="formatted-output">
+          <!-- Conteúdo formatado pode ser injetado aqui -->
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
