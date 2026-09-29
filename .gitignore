@@ -1,0 +1,17 @@
+# Variáveis de ambiente e segredos
+.env
+.env.local
+.env.*.local
+
+# Dependências (caso use Node.js ou Python)
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+
+# Logs e arquivos de sistema
+*.log
+.DS_Store
+Thumbs.db
