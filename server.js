@@ -811,10 +811,10 @@ app.get('/api/dashboard', async (req, res) => {
    ========================================================================== */
 app.get('/api/versao-git', (req, res) => {
   try {
-    let commitHash = '0f8d435';
-    let commitFull = '0f8d435';
+    let commitHash = '8bbe7ae';
+    let commitFull = '8bbe7ae';
     let commitDate = new Date().toLocaleDateString('pt-BR');
-    let commitMsg = 'Entrega N2 Final - Login, Commit na tela principal e Readme';
+    let commitMsg = 'Usa SQLite nativo built-in (node:sqlite) para compatibilidade total com Render';
 
     try {
       commitHash = execSync('git rev-parse --short HEAD').toString().trim();
