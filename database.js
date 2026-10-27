@@ -1,4 +1,4 @@
-import sqlite3 from 'sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -6,59 +6,68 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, 'financeiro.sqlite');
 
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('❌ Erro ao conectar ao banco de dados SQLite:', err.message);
-  } else {
-    console.log('✅ Banco de dados SQLite conectado em:', dbPath);
+let db;
+try {
+  db = new DatabaseSync(dbPath);
+  console.log('✅ Banco de dados SQLite nativo (node:sqlite) conectado em:', dbPath);
+} catch (err) {
+  console.error('❌ Erro ao conectar ao SQLite nativo:', err);
+  // Fallback em memória se houver restrição de permissão de escrita
+  db = new DatabaseSync(':memory:');
+}
+
+// Helpers compatíveis com a API existente
+export async function runQuery(sql, params = []) {
+  try {
+    const trimmed = sql.trim();
+    if (trimmed.startsWith('CREATE') || trimmed.startsWith('PRAGMA') || trimmed.startsWith('DROP')) {
+      db.exec(sql);
+      return { id: 0, changes: 0 };
+    }
+    const stmt = db.prepare(sql);
+    const info = stmt.run(...params);
+    return { id: Number(info.lastInsertRowid), changes: info.changes };
+  } catch (err) {
+    throw err;
   }
-});
-
-// Helper para executar queries com Promises
-export function runQuery(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve({ id: this.lastID, changes: this.changes });
-    });
-  });
 }
 
-export function getQuery(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
+export async function getQuery(sql, params = []) {
+  try {
+    const stmt = db.prepare(sql);
+    const row = stmt.get(...params);
+    return row || null;
+  } catch (err) {
+    throw err;
+  }
 }
 
-export function allQuery(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows || []);
-    });
-  });
+export async function allQuery(sql, params = []) {
+  try {
+    const stmt = db.prepare(sql);
+    const rows = stmt.all(...params);
+    return rows || [];
+  } catch (err) {
+    throw err;
+  }
 }
 
 // Inicialização das tabelas e seeds
 export async function initDatabase() {
-  // Habilita chaves estrangeiras
   await runQuery('PRAGMA foreign_keys = ON;');
 
   // 1. Tabela PESSOAS (Fornecedores, Clientes, Faturados)
   await runQuery(`
     CREATE TABLE IF NOT EXISTS PESSOAS (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      tipo TEXT NOT NULL, -- 'CLIENTE-FORNECEDOR', 'FORNECEDOR', 'CLIENTE', 'FATURADO'
+      tipo TEXT NOT NULL,
       razaoSocial TEXT NOT NULL,
       nomeFantasia TEXT,
       cpfCnpj TEXT NOT NULL,
       telefone TEXT,
       email TEXT,
       endereco TEXT,
-      status TEXT NOT NULL DEFAULT 'ATIVO', -- 'ATIVO', 'INATIVO'
+      status TEXT NOT NULL DEFAULT 'ATIVO',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -71,9 +80,9 @@ export async function initDatabase() {
   await runQuery(`
     CREATE TABLE IF NOT EXISTS CLASSIFICACAO (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      tipo TEXT NOT NULL, -- 'DESPESA', 'RECEITA'
+      tipo TEXT NOT NULL,
       descricao TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'ATIVO', -- 'ATIVO', 'INATIVO'
+      status TEXT NOT NULL DEFAULT 'ATIVO',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -86,15 +95,15 @@ export async function initDatabase() {
   await runQuery(`
     CREATE TABLE IF NOT EXISTS MOVIMENTOCONTAS (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      tipo TEXT NOT NULL, -- 'APAGAR', 'RECEBER'
-      idPessoaFornecedor INTEGER, -- Foreign key para PESSOAS (quem emite/fornecedor)
-      idPessoaFaturado INTEGER,   -- Foreign key para PESSOAS (a quem se destina/faturado)
+      tipo TEXT NOT NULL,
+      idPessoaFornecedor INTEGER,
+      idPessoaFaturado INTEGER,
       numeroDocumento TEXT,
       dataEmissao TEXT,
       dataVencimento TEXT,
       valorTotal REAL NOT NULL DEFAULT 0.0,
       observacao TEXT,
-      status TEXT NOT NULL DEFAULT 'ATIVO', -- 'ATIVO', 'INATIVO'
+      status TEXT NOT NULL DEFAULT 'ATIVO',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (idPessoaFornecedor) REFERENCES PESSOAS (id),
@@ -102,7 +111,7 @@ export async function initDatabase() {
     );
   `);
 
-  // 4. Tabela MOVIMENTO_CLASSIFICACOES (N:N - Um movimento pode ter uma ou mais classificações)
+  // 4. Tabela MOVIMENTO_CLASSIFICACOES
   await runQuery(`
     CREATE TABLE IF NOT EXISTS MOVIMENTO_CLASSIFICACOES (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -114,24 +123,24 @@ export async function initDatabase() {
     );
   `);
 
-  // 5. Tabela PARCELACONTAS (Uma ou mais parcelas com identificação ÚNICA)
+  // 5. Tabela PARCELACONTAS
   await runQuery(`
     CREATE TABLE IF NOT EXISTS PARCELACONTAS (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       idMovimento INTEGER NOT NULL,
       numeroParcela INTEGER NOT NULL DEFAULT 1,
-      identificacao TEXT NOT NULL UNIQUE, -- Identificação ÚNICA exigida pela regra de negócio
+      identificacao TEXT NOT NULL UNIQUE,
       dataVencimento TEXT NOT NULL,
       valor REAL NOT NULL DEFAULT 0.0,
-      status TEXT NOT NULL DEFAULT 'ATIVO', -- 'ATIVO', 'INATIVO'
+      status TEXT NOT NULL DEFAULT 'ATIVO',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (idMovimento) REFERENCES MOVIMENTOCONTAS (id) ON DELETE CASCADE
     );
   `);
 
-  // Seeds iniciais de Classificação (Categorias Oficiais da N2)
+  // Seeds iniciais de Classificação
   const countClassif = await getQuery('SELECT COUNT(*) as total FROM CLASSIFICACAO');
-  if (countClassif.total === 0) {
+  if (!countClassif || countClassif.total === 0) {
     const despesasOficiais = [
       'INSUMOS AGRÍCOLAS',
       'MANUTENÇÃO E OPERAÇÃO',
@@ -169,9 +178,9 @@ export async function initDatabase() {
     console.log('🌱 Seeds de Classificações oficiais inseridos com sucesso!');
   }
 
-  // Seed inicial opcional de Pessoas para testar busca de EXISTE / NÃO EXISTE
+  // Seed inicial opcional de Pessoas
   const countPessoas = await getQuery('SELECT COUNT(*) as total FROM PESSOAS');
-  if (countPessoas.total === 0) {
+  if (!countPessoas || countPessoas.total === 0) {
     await runQuery(`
       INSERT INTO PESSOAS (tipo, razaoSocial, nomeFantasia, cpfCnpj, telefone, email, endereco, status)
       VALUES 
