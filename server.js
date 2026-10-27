@@ -811,10 +811,10 @@ app.get('/api/dashboard', async (req, res) => {
    ========================================================================== */
 app.get('/api/versao-git', (req, res) => {
   try {
-    let commitHash = '46b00cc';
-    let commitFull = '46b00cc6cadfc24325521e21c070a4e0633987bb';
+    let commitHash = '0f8d435';
+    let commitFull = '0f8d435';
     let commitDate = new Date().toLocaleDateString('pt-BR');
-    let commitMsg = 'Entrega 2a Etapa N2 - Analise em BD, Cadastros e Contas a Pagar';
+    let commitMsg = 'Entrega N2 Final - Login, Commit na tela principal e Readme';
 
     try {
       commitHash = execSync('git rev-parse --short HEAD').toString().trim();
