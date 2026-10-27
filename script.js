@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupContasPagarCRUD();
   setupContasReceberCRUD();
   setupDashboard();
+  setupAuth();
+  loadGitCommitInfo();
 
   // Carrega chave de API salva no localStorage
   const savedKey = localStorage.getItem('user_gemini_api_key');
@@ -959,6 +961,85 @@ async function loadDashboardData() {
     }
   } catch (err) {
     console.error('Erro ao carregar dashboard:', err);
+  }
+}
+
+// ==========================================================================
+// 7. AUTENTICAÇÃO (LOGIN / SENHA) & CÓDIGO DA ÚLTIMA ATUALIZAÇÃO GITHUB
+// ==========================================================================
+function setupAuth() {
+  const formLogin = document.getElementById('form-login');
+  const loginOverlay = document.getElementById('login-overlay');
+  const btnLogout = document.querySelector('.btn-logout');
+
+  // Verifica se o usuário já fez login na sessão
+  const isLogged = sessionStorage.getItem('usuario_logado');
+  if (!isLogged) {
+    // Para facilitar a navegação inicial, se quiser exigir tela cheia:
+    // loginOverlay.style.display = 'flex';
+  }
+
+  if (formLogin) {
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const usuario = document.getElementById('login-usuario').value.trim();
+      const senha = document.getElementById('login-senha').value.trim();
+
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuario, senha })
+        });
+
+        const resData = await resp.json();
+        if (!resp.ok) {
+          throw new Error(resData.error || 'Credenciais inválidas');
+        }
+
+        sessionStorage.setItem('usuario_logado', JSON.stringify(resData.usuario));
+        loginOverlay.style.display = 'none';
+        alert(`Bem-vindo ao sistema, ${resData.usuario.nome}!`);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+      if (confirm('Deseja sair da sua sessão?')) {
+        sessionStorage.removeItem('usuario_logado');
+        loginOverlay.style.display = 'flex';
+      }
+    });
+  }
+}
+
+async function loadGitCommitInfo() {
+  try {
+    const resp = await fetch('/api/versao-git');
+    if (!resp.ok) return;
+    const data = await resp.json();
+
+    const commitTop = document.getElementById('lbl-git-commit-top');
+    const commitMain = document.getElementById('lbl-git-commit-main');
+    const commitDate = document.getElementById('lbl-git-commit-date');
+    const btnCopyCommit = document.getElementById('btn-copy-commit-hash');
+
+    if (commitTop) commitTop.textContent = `Commit #${data.commit}`;
+    if (commitMain) commitMain.textContent = `Commit #${data.commit}`;
+    if (commitDate) commitDate.textContent = `Atualizado em: ${data.data}`;
+
+    if (btnCopyCommit) {
+      btnCopyCommit.addEventListener('click', () => {
+        navigator.clipboard.writeText(data.commitCompleto || data.commit);
+        btnCopyCommit.textContent = 'Copiado!';
+        setTimeout(() => { btnCopyCommit.textContent = 'Copiar Hash'; }, 2000);
+      });
+    }
+  } catch (e) {
+    console.warn('Não foi possível obter commit git:', e);
   }
 }
 

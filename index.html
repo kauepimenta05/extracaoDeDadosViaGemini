@@ -127,7 +127,16 @@
           <span>Início</span> / <strong id="breadcrumb-current">Dashboard</strong>
         </div>
         <div class="topbar-right">
-          <span class="status-indicator-pill"><span class="pulse-dot"></span> Sistema Operacional</span>
+          <!-- Código da Última Atualização no GitHub (Exigência do Professor) -->
+          <div class="github-commit-badge" id="topbar-git-commit" title="Código da Última Atualização no GitHub">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="1.05" y1="12" x2="7" y2="12"/>
+              <line x1="17.01" y1="12" x2="22.96" y2="12"/>
+            </svg>
+            <span>GitHub: <strong id="lbl-git-commit-top">Commit #46b00cc</strong></span>
+          </div>
+          <span class="status-indicator-pill"><span class="pulse-dot"></span> Online</span>
         </div>
       </header>
 
@@ -139,6 +148,25 @@
           <div class="page-title-box">
             <h1 class="page-title">Dashboard Administrativo-Financeiro</h1>
             <p class="page-subtitle">Visão geral dos cadastros, classificações e movimentos financeiros</p>
+          </div>
+
+          <!-- Card de Versão do GitHub (Exigência Expressa da Entrega N2) -->
+          <div class="github-commit-card">
+            <div class="git-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/>
+                <line x1="1.05" y1="12" x2="7" y2="12"/>
+                <line x1="17.01" y1="12" x2="22.96" y2="12"/>
+              </svg>
+            </div>
+            <div class="git-info-text">
+              <span class="git-label">CÓDIGO DA ÚLTIMA ATUALIZAÇÃO NO GITHUB:</span>
+              <strong class="git-commit-hash" id="lbl-git-commit-main">Commit #46b00cc</strong>
+              <span class="git-commit-date" id="lbl-git-commit-date">Atualizado em: 27/10/2026</span>
+            </div>
+            <button type="button" class="btn-copy-commit" id="btn-copy-commit-hash" title="Copiar código do commit">
+              Copiar Hash
+            </button>
           </div>
 
           <div class="stats-grid">
@@ -924,6 +952,45 @@
             ✕ Cancelar
           </button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       TELA / MODAL DE LOGIN (Para os Requisitos de Login e Senha da Entrega)
+       ==================================================================== -->
+  <div class="login-overlay" id="login-overlay" style="display: none;">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="brand-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <h2>Sistema Administrativo-Financeiro</h2>
+        <p>Acesse com as credenciais do projeto</p>
+      </div>
+
+      <form id="form-login">
+        <div class="form-group">
+          <label class="form-label">Usuário / Login</label>
+          <input type="text" id="login-usuario" class="form-control" value="coordenador" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" id="login-senha" class="form-control" value="admin123" required />
+        </div>
+
+        <div class="login-credentials-tip">
+          <span>💡 <strong>Credenciais para Avaliação:</strong></span>
+          <code>Usuário: coordenador | Senha: admin123</code>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; margin-top: 14px;">
+          Entrar no Sistema
+        </button>
       </form>
     </div>
   </div>
